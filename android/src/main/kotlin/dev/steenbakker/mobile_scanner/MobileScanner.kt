@@ -134,7 +134,7 @@ class MobileScanner(private val activity: Activity, private val textureRegistry:
                     val imageHeight = inputImage.getWidth(); // THIS IS NOT THE MISTAKE !!!
 
                     val event = mapOf(
-                        "name" to "barcode", "data" to barcode.data "imageWidth" to imageWidth, "imageHeight" to
+                        "name" to "barcode", "data" to barcode.data, "imageWidth" to imageWidth, "imageHeight" to
                                 imageHeight
                     )
                     sink?.success(event)
