@@ -14,7 +14,7 @@ class MobileScanner extends StatefulWidget {
   ///
   /// [barcode] The barcode object with all information about the scanned code.
   /// [args] Information about the state of the MobileScanner widget
-  final Function(Barcode barcode, double? imageWidth, double? imageHeight, MobileScannerArguments? args) onDetect;
+  final Function(Barcode barcode, Size imageSize, MobileScannerArguments? args) onDetect;
 
   /// TODO: Function that gets called when the Widget is initialized. Can be usefull
   /// to check wether the device has a torch(flash) or not.
@@ -151,9 +151,9 @@ class _MobileScannerState extends State<MobileScanner> with WidgetsBindingObserv
                 if (!widget.allowDuplicates) {
                   if (lastScanned == barcode.rawValue) return;
                   lastScanned = barcode.rawValue;
-                  widget.onDetect(barcode, code.imageWidth, code.imageHeight, value! as MobileScannerArguments);
+                  widget.onDetect(barcode, code.imageSize, value! as MobileScannerArguments);
                 } else {
-                  widget.onDetect(barcode, code.imageWidth, code.imageHeight, value! as MobileScannerArguments);
+                  widget.onDetect(barcode, code.imageSize, value! as MobileScannerArguments);
                 }
               });
               return ClipRect(

@@ -29,9 +29,8 @@ enum TorchState {
 
 class Code {
   final Barcode barcode;
-  final double? imageWidth;
-  final double? imageHeight;
-  Code(this.barcode, this.imageWidth, this.imageHeight);
+  final Size imageSize;
+  Code(this.barcode, this.imageSize);
 }
 
 // enum AnalyzeMode { none, barcode }
@@ -101,18 +100,18 @@ class MobileScannerController {
         final barcode = Barcode.fromNative(data as Map? ?? {});
         final imageWidth = event['imageWidth'].toDouble();
         final imageHeight = event['imageHeight'].toDouble();
-        barcodesController.add(Code(barcode, imageWidth, imageHeight));
+        final imageSize = Size(imageWidth, imageHeight);
+        barcodesController.add(Code(barcode, imageSize));
         break;
       case 'barcodeMac':
         barcodesController.add(Code(
             Barcode(
               rawValue: (data as Map)['payload'] as String?,
             ),
-            null,
-            null));
+            const Size(0.0, 0.0)));
         break;
       case 'barcodeWeb':
-        barcodesController.add(Code(Barcode(rawValue: data as String?), null, null));
+        barcodesController.add(Code(Barcode(rawValue: data as String?), const Size(0.0, 0.0)));
         break;
       default:
         throw UnimplementedError();
