@@ -5,12 +5,10 @@ class BarcodeScannerWithoutController extends StatefulWidget {
   const BarcodeScannerWithoutController({Key? key}) : super(key: key);
 
   @override
-  _BarcodeScannerWithoutControllerState createState() =>
-      _BarcodeScannerWithoutControllerState();
+  _BarcodeScannerWithoutControllerState createState() => _BarcodeScannerWithoutControllerState();
 }
 
-class _BarcodeScannerWithoutControllerState
-    extends State<BarcodeScannerWithoutController>
+class _BarcodeScannerWithoutControllerState extends State<BarcodeScannerWithoutController>
     with SingleTickerProviderStateMixin {
   String? barcode;
 
@@ -25,7 +23,7 @@ class _BarcodeScannerWithoutControllerState
               MobileScanner(
                 fit: BoxFit.contain,
                 // allowDuplicates: false,
-                onDetect: (barcode, args) {
+                onDetect: (barcode, _, args) {
                   setState(() {
                     this.barcode = barcode.rawValue;
                   });
@@ -48,10 +46,7 @@ class _BarcodeScannerWithoutControllerState
                             child: Text(
                               barcode ?? 'Scan something!',
                               overflow: TextOverflow.fade,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .headline4!
-                                  .copyWith(color: Colors.white),
+                              style: Theme.of(context).textTheme.headline4!.copyWith(color: Colors.white),
                             ),
                           ),
                         ),

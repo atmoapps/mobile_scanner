@@ -108,7 +108,7 @@ public class SwiftMobileScannerPlugin: NSObject, FlutterPlugin, FlutterStreamHan
             scanner.process(image) { [self] barcodes, error in
                 if error == nil && barcodes != nil {
                     for barcode in barcodes! {
-                        let event: [String: Any?] = ["name": "barcode", "data": barcode.data]
+                        let event: [String: Any?] = ["name": "barcode", "data": barcode.data, "imageWidth": buffer!.image.size.width, "imageHeight": buffer!.image.size.height]
                         sink?(event)
                     }
                 }
@@ -290,7 +290,7 @@ public class SwiftMobileScannerPlugin: NSObject, FlutterPlugin, FlutterStreamHan
             if error == nil && barcodes != nil {
                 for barcode in barcodes! {
                     barcodeFound = true
-                    let event: [String: Any?] = ["name": "barcode", "data": barcode.data]
+                    let event: [String: Any?] = ["name": "barcode", "data": barcode.data, "imageWidth": uiImage!.size.width, "imageHeight": uiImage!.size.height]
                     sink?(event)
                 }
             } else if error != nil {

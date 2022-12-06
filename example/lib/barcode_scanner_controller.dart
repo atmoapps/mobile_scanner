@@ -6,12 +6,10 @@ class BarcodeScannerWithController extends StatefulWidget {
   const BarcodeScannerWithController({Key? key}) : super(key: key);
 
   @override
-  _BarcodeScannerWithControllerState createState() =>
-      _BarcodeScannerWithControllerState();
+  _BarcodeScannerWithControllerState createState() => _BarcodeScannerWithControllerState();
 }
 
-class _BarcodeScannerWithControllerState
-    extends State<BarcodeScannerWithController>
+class _BarcodeScannerWithControllerState extends State<BarcodeScannerWithController>
     with SingleTickerProviderStateMixin {
   String? barcode;
 
@@ -39,7 +37,7 @@ class _BarcodeScannerWithControllerState
                 //   torchEnabled: true,
                 //   facing: CameraFacing.front,
                 // ),
-                onDetect: (barcode, args) {
+                onDetect: (barcode, _, args) {
                   setState(() {
                     this.barcode = barcode.rawValue;
                   });
@@ -84,9 +82,7 @@ class _BarcodeScannerWithControllerState
                       ),
                       IconButton(
                         color: Colors.white,
-                        icon: isStarted
-                            ? const Icon(Icons.stop)
-                            : const Icon(Icons.play_arrow),
+                        icon: isStarted ? const Icon(Icons.stop) : const Icon(Icons.play_arrow),
                         iconSize: 32.0,
                         onPressed: () => setState(() {
                           isStarted ? controller.stop() : controller.start();
@@ -101,10 +97,7 @@ class _BarcodeScannerWithControllerState
                             child: Text(
                               barcode ?? 'Scan something!',
                               overflow: TextOverflow.fade,
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .headline4!
-                                  .copyWith(color: Colors.white),
+                              style: Theme.of(context).textTheme.headline4!.copyWith(color: Colors.white),
                             ),
                           ),
                         ),

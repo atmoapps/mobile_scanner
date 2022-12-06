@@ -13,7 +13,7 @@ class MobileScanner extends StatefulWidget {
   ///
   /// [barcode] The barcode object with all information about the scanned code.
   /// [args] Information about the state of the MobileScanner widget
-  final Function(Barcode barcode, MobileScannerArguments? args) onDetect;
+  final Function(Barcode barcode, Size imageSize, MobileScannerArguments? args) onDetect;
 
   /// TODO: Function that gets called when the Widget is initialized. Can be usefull
   /// to check wether the device has a torch(flash) or not.
@@ -40,8 +40,7 @@ class MobileScanner extends StatefulWidget {
   State<MobileScanner> createState() => _MobileScannerState();
 }
 
-class _MobileScannerState extends State<MobileScanner>
-    with WidgetsBindingObserver {
+class _MobileScannerState extends State<MobileScanner> with WidgetsBindingObserver {
   late MobileScannerController controller;
 
   @override
@@ -78,14 +77,15 @@ class _MobileScannerState extends State<MobileScanner>
             if (value == null) {
               return Container(color: Colors.black);
             } else {
-              controller.barcodes.listen((barcode) {
+              controller.barcodes.listen((code) {
+                final barcode = code.barcode;
                 if (!widget.allowDuplicates) {
                   if (lastScanned != barcode.rawValue) {
                     lastScanned = barcode.rawValue;
-                    widget.onDetect(barcode, value! as MobileScannerArguments);
+                    widget.onDetect(barcode, code.imageSize, value! as MobileScannerArguments);
                   }
                 } else {
-                  widget.onDetect(barcode, value! as MobileScannerArguments);
+                  widget.onDetect(barcode, code.imageSize, value! as MobileScannerArguments);
                 }
               });
               return ClipRect(
@@ -97,9 +97,7 @@ class _MobileScannerState extends State<MobileScanner>
                     child: SizedBox(
                       width: value.size.width,
                       height: value.size.height,
-                      child: kIsWeb
-                          ? HtmlElementView(viewType: value.webId!)
-                          : Texture(textureId: value.textureId!),
+                      child: kIsWeb ? HtmlElementView(viewType: value.webId!) : Texture(textureId: value.textureId!),
                     ),
                   ),
                 ),
