@@ -39,7 +39,7 @@ class _BarcodeScannerWithControllerState
                 //   torchEnabled: true,
                 //   facing: CameraFacing.front,
                 // ),
-                onDetect: (barcode, args) {
+                onDetect: (barcode, _, args) {
                   setState(() {
                     this.barcode = barcode.rawValue;
                   });

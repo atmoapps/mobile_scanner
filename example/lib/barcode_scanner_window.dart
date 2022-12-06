@@ -26,7 +26,7 @@ class _BarcodeScannerWithScanWindowState
     await controller.start();
   }
 
-  Future<void> onDetect(Barcode barcode, MobileScannerArguments? _) async {
+  Future<void> onDetect(Barcode barcode, Size _, MobileScannerArguments? _) async {
     setState(() => this.barcode = barcode.rawValue);
     await Future.delayed(const Duration(seconds: 1));
     setState(() => this.barcode = '');

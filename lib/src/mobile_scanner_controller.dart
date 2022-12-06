@@ -27,13 +27,17 @@ enum TorchState {
   on,
 }
 
+class Code {
+  final Barcode barcode;
+  final Size imageSize;
+  Code(this.barcode, this.imageSize);
+}
+
 // enum AnalyzeMode { none, barcode }
 
 class MobileScannerController {
-  MethodChannel methodChannel =
-      const MethodChannel('dev.steenbakker.mobile_scanner/scanner/method');
-  EventChannel eventChannel =
-      const EventChannel('dev.steenbakker.mobile_scanner/scanner/event');
+  MethodChannel methodChannel = const MethodChannel('dev.steenbakker.mobile_scanner/scanner/method');
+  EventChannel eventChannel = const EventChannel('dev.steenbakker.mobile_scanner/scanner/event');
 
   //Must be static to keep the same value on new instances
   static int? _controllerHashcode;
@@ -52,12 +56,12 @@ class MobileScannerController {
 
   CameraFacing facing;
   bool hasTorch = false;
-  late StreamController<Barcode> barcodesController;
+  late StreamController<Code> barcodesController;
 
   /// Whether to automatically resume the camera when the application is resumed
   bool autoResume;
 
-  Stream<Barcode> get barcodes => barcodesController.stream;
+  Stream<Code> get barcodes => barcodesController.stream;
 
   MobileScannerController({
     this.facing = CameraFacing.back,
@@ -81,9 +85,7 @@ class MobileScannerController {
         );
 
     // Listen to events from the platform specific code
-    events = eventChannel
-        .receiveBroadcastStream()
-        .listen((data) => handleEvent(data as Map));
+    events = eventChannel.receiveBroadcastStream().listen((data) => handleEvent(data as Map));
   }
 
   void handleEvent(Map event) {
@@ -96,17 +98,20 @@ class MobileScannerController {
         break;
       case 'barcode':
         final barcode = Barcode.fromNative(data as Map? ?? {});
-        barcodesController.add(barcode);
+        final imageWidth = event['imageWidth'].toDouble();
+        final imageHeight = event['imageHeight'].toDouble();
+        final imageSize = Size(imageWidth, imageHeight);
+        barcodesController.add(Code(barcode, imageSize));
         break;
       case 'barcodeMac':
-        barcodesController.add(
-          Barcode(
-            rawValue: (data as Map)['payload'] as String?,
-          ),
-        );
+        barcodesController.add(Code(
+            Barcode(
+              rawValue: (data as Map)['payload'] as String?,
+            ),
+            const Size(0.0, 0.0)));
         break;
       case 'barcodeWeb':
-        barcodesController.add(Barcode(rawValue: data as String?));
+        barcodesController.add(Code(Barcode(rawValue: data as String?), const Size(0.0, 0.0)));
         break;
       default:
         throw UnimplementedError();
@@ -136,15 +141,11 @@ class MobileScannerController {
 
     // Check authorization status
     if (!kIsWeb) {
-      MobileScannerState state = MobileScannerState
-          .values[await methodChannel.invokeMethod('state') as int? ?? 0];
+      MobileScannerState state = MobileScannerState.values[await methodChannel.invokeMethod('state') as int? ?? 0];
       switch (state) {
         case MobileScannerState.undetermined:
-          final bool result =
-              await methodChannel.invokeMethod('request') as bool? ?? false;
-          state = result
-              ? MobileScannerState.authorized
-              : MobileScannerState.denied;
+          final bool result = await methodChannel.invokeMethod('request') as bool? ?? false;
+          state = result ? MobileScannerState.authorized : MobileScannerState.denied;
           break;
         case MobileScannerState.denied:
           isStarting = false;
@@ -237,8 +238,7 @@ class MobileScannerController {
       return;
     }
 
-    final TorchState state =
-        torchState.value == TorchState.off ? TorchState.on : TorchState.off;
+    final TorchState state = torchState.value == TorchState.off ? TorchState.on : TorchState.off;
 
     try {
       await methodChannel.invokeMethod('torch', state.index);
@@ -260,8 +260,7 @@ class MobileScannerController {
       );
       return;
     }
-    facing =
-        facing == CameraFacing.back ? CameraFacing.front : CameraFacing.back;
+    facing = facing == CameraFacing.back ? CameraFacing.front : CameraFacing.back;
     await start();
   }
 
@@ -271,9 +270,7 @@ class MobileScannerController {
   ///
   /// [path] The path of the image on the devices
   Future<bool> analyzeImage(String path) async {
-    return methodChannel
-        .invokeMethod<bool>('analyzeImage', path)
-        .then<bool>((bool? value) => value ?? false);
+    return methodChannel.invokeMethod<bool>('analyzeImage', path).then<bool>((bool? value) => value ?? false);
   }
 
   /// Disposes the MobileScannerController and closes all listeners.
@@ -289,8 +286,7 @@ class MobileScannerController {
 
   /// Checks if the MobileScannerController is bound to the correct MobileScanner object.
   void ensure(String name) {
-    final message =
-        'MobileScannerController.$name called after MobileScannerController.dispose\n'
+    final message = 'MobileScannerController.$name called after MobileScannerController.dispose\n'
         'MobileScannerController methods should not be used after calling dispose.';
     assert(hashCode == _controllerHashcode, message);
   }

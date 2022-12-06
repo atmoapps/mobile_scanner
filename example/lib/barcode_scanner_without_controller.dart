@@ -25,7 +25,7 @@ class _BarcodeScannerWithoutControllerState
               MobileScanner(
                 fit: BoxFit.contain,
                 // allowDuplicates: false,
-                onDetect: (barcode, args) {
+                onDetect: (barcode, _, args) {
                   setState(() {
                     this.barcode = barcode.rawValue;
                   });

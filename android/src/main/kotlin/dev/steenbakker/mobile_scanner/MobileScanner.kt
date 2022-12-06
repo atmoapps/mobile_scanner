@@ -32,8 +32,8 @@ import java.io.File
 import kotlin.math.roundToInt
 
 
-class MobileScanner(private val activity: Activity, private val textureRegistry: TextureRegistry)
-    : MethodChannel.MethodCallHandler, EventChannel.StreamHandler, PluginRegistry.RequestPermissionsResultListener {
+class MobileScanner(private val activity: Activity, private val textureRegistry: TextureRegistry) :
+    MethodChannel.MethodCallHandler, EventChannel.StreamHandler, PluginRegistry.RequestPermissionsResultListener {
     companion object {
         private const val REQUEST_CODE = 22022022
         private val TAG = MobileScanner::class.java.simpleName
@@ -74,15 +74,23 @@ class MobileScanner(private val activity: Activity, private val textureRegistry:
         sink = null
     }
 
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray): Boolean {
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ): Boolean {
         return listener?.onRequestPermissionsResult(requestCode, permissions, grantResults) ?: false
     }
 
     private fun checkPermission(result: MethodChannel.Result) {
         // Can't get exact denied or not_determined state without request. Just return not_determined when state isn't authorized
         val state =
-                if (ContextCompat.checkSelfPermission(activity, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) 1
-                else 0
+            if (ContextCompat.checkSelfPermission(
+                    activity,
+                    Manifest.permission.CAMERA
+                ) == PackageManager.PERMISSION_GRANTED
+            ) 1
+            else 0
         result.success(state)
     }
 
@@ -110,19 +118,25 @@ class MobileScanner(private val activity: Activity, private val textureRegistry:
         scanner.process(inputImage)
             .addOnSuccessListener { barcodes ->
                 for (barcode in barcodes) {
-                    print("image: ")   
+                    print("image: ")
                     println(inputImage.getWidth());
                     println(inputImage.getHeight());
 
-                    print("barcode: ")   
+                    print("barcode: ")
                     println(barcode.getBoundingBox());
 
-                    if(scanWindow != null) {
+                    if (scanWindow != null) {
                         val match = isbarCodeInScanWindow(scanWindow!!, barcode, imageProxy)
-                        if(!match) continue
+                        if (!match) continue
                     }
 
-                    val event = mapOf("name" to "barcode", "data" to barcode.data)
+                    val imageWidth = inputImage.getHeight(); // THIS IS NOT THE MISTAKE !!!
+                    val imageHeight = inputImage.getWidth(); // THIS IS NOT THE MISTAKE !!!
+
+                    val event = mapOf(
+                        "name" to "barcode", "data" to barcode.data, "imageWidth" to imageWidth, "imageHeight" to
+                                imageHeight
+                    )
                     sink?.success(event)
                 }
             }
@@ -138,9 +152,9 @@ class MobileScanner(private val activity: Activity, private val textureRegistry:
 
     // scales the scanWindow to the provided inputImage and checks if that scaled
     // scanWindow contains the barcode
-    private fun isbarCodeInScanWindow(scanWindow: List<Float>, barcode: Barcode, inputImage: ImageProxy): Boolean {    
+    private fun isbarCodeInScanWindow(scanWindow: List<Float>, barcode: Barcode, inputImage: ImageProxy): Boolean {
         val barcodeBoundingBox = barcode.getBoundingBox()
-        if(barcodeBoundingBox == null) return false
+        if (barcodeBoundingBox == null) return false
 
         val imageWidth = inputImage.getHeight();
         val imageHeight = inputImage.getWidth();
@@ -150,13 +164,12 @@ class MobileScanner(private val activity: Activity, private val textureRegistry:
         val right = (scanWindow[2] * imageWidth).roundToInt()
         val bottom = (scanWindow[3] * imageHeight).roundToInt()
 
-        val scaledScanWindow = Rect(left, top, right, bottom)   
+        val scaledScanWindow = Rect(left, top, right, bottom)
 
-        print("scanWindow: ")           
-        println(scaledScanWindow)           
+        print("scanWindow: ")
+        println(scaledScanWindow)
         return scaledScanWindow.contains(barcodeBoundingBox)
     }
-
 
 
     @ExperimentalGetImage
@@ -166,8 +179,15 @@ class MobileScanner(private val activity: Activity, private val textureRegistry:
             val portrait = camera!!.cameraInfo.sensorRotationDegrees % 180 == 0
             val width = resolution.width.toDouble()
             val height = resolution.height.toDouble()
-            val size = if (portrait) mapOf("width" to width, "height" to height) else mapOf("width" to height, "height" to width)
-            val answer = mapOf("textureId" to textureEntry!!.id(), "size" to size, "torchable" to camera!!.cameraInfo.hasFlashUnit())
+            val size = if (portrait) mapOf("width" to width, "height" to height) else mapOf(
+                "width" to height,
+                "height" to width
+            )
+            val answer = mapOf(
+                "textureId" to textureEntry!!.id(),
+                "size" to size,
+                "torchable" to camera!!.cameraInfo.hasFlashUnit()
+            )
             result.success(answer)
         } else {
             val facing: Int = call.argument<Int>("facing") ?: 0
@@ -181,9 +201,16 @@ class MobileScanner(private val activity: Activity, private val textureRegistry:
                     formatsList.add(BarcodeFormats.values()[index].intValue)
                 }
                 scanner = if (formatsList.size == 1) {
-                    BarcodeScanning.getClient(BarcodeScannerOptions.Builder().setBarcodeFormats(formatsList.first()).build())
+                    BarcodeScanning.getClient(
+                        BarcodeScannerOptions.Builder().setBarcodeFormats(formatsList.first()).build()
+                    )
                 } else {
-                    BarcodeScanning.getClient(BarcodeScannerOptions.Builder().setBarcodeFormats(formatsList.first(), *formatsList.subList(1, formatsList.size).toIntArray()).build())
+                    BarcodeScanning.getClient(
+                        BarcodeScannerOptions.Builder().setBarcodeFormats(
+                            formatsList.first(),
+                            *formatsList.subList(1, formatsList.size).toIntArray()
+                        ).build()
+                    )
                 }
             }
 
@@ -202,9 +229,10 @@ class MobileScanner(private val activity: Activity, private val textureRegistry:
                     result.error("textureEntry", "textureEntry is null", null)
                     return@addListener
                 }
-               
+
                 // Select the correct camera
-                val selector = if (facing == 0) CameraSelector.DEFAULT_FRONT_CAMERA else CameraSelector.DEFAULT_BACK_CAMERA
+                val selector =
+                    if (facing == 0) CameraSelector.DEFAULT_FRONT_CAMERA else CameraSelector.DEFAULT_BACK_CAMERA
 
                 // Preview
                 val surfaceProvider = Preview.SurfaceProvider { request ->
@@ -225,15 +253,17 @@ class MobileScanner(private val activity: Activity, private val textureRegistry:
 
                 // Build the analyzer to be passed on to MLKit
                 val analysisBuilder = ImageAnalysis.Builder()
-                        .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                        .setTargetAspectRatio(ratio)
-                        .setTargetRotation(previewRotation) 
+                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+                    .setTargetAspectRatio(ratio)
+                    .setTargetRotation(previewRotation)
                 val analysis = analysisBuilder.build().apply { setAnalyzer(executor, analyzer) }
-                
-                val viewPort = ViewPort.Builder(Rational(previewResolution.width, previewResolution.height), previewRotation).build()
+
+                val viewPort =
+                    ViewPort.Builder(Rational(previewResolution.width, previewResolution.height), previewRotation)
+                        .build()
                 val useCaseGroup = UseCaseGroup.Builder()
                     .setViewPort(viewPort)
-                    .addUseCase(preview!!) 
+                    .addUseCase(preview!!)
                     .addUseCase(analysis)
                     .build()
 
@@ -258,8 +288,15 @@ class MobileScanner(private val activity: Activity, private val textureRegistry:
                 val portrait = camera!!.cameraInfo.sensorRotationDegrees % 180 == 0
                 val width = resolution.width.toDouble()
                 val height = resolution.height.toDouble()
-                val size = if (portrait) mapOf("width" to width, "height" to height) else mapOf("width" to height, "height" to width)
-                val answer = mapOf("textureId" to textureEntry!!.id(), "size" to size, "torchable" to camera!!.cameraInfo.hasFlashUnit())
+                val size = if (portrait) mapOf("width" to width, "height" to height) else mapOf(
+                    "width" to height,
+                    "height" to width
+                )
+                val answer = mapOf(
+                    "textureId" to textureEntry!!.id(),
+                    "size" to size,
+                    "torchable" to camera!!.cameraInfo.hasFlashUnit()
+                )
                 result.success(answer)
             }, executor)
         }
@@ -267,7 +304,7 @@ class MobileScanner(private val activity: Activity, private val textureRegistry:
 
     private fun toggleTorch(call: MethodCall, result: MethodChannel.Result) {
         if (camera == null) {
-            result.error(TAG,"Called toggleTorch() while stopped!", null)
+            result.error(TAG, "Called toggleTorch() while stopped!", null)
             return
         }
         camera!!.cameraControl.enableTorch(call.arguments == 1)
@@ -280,7 +317,7 @@ class MobileScanner(private val activity: Activity, private val textureRegistry:
 //    }
 
     private fun analyzeImage(call: MethodCall, result: MethodChannel.Result) {
-        val uri = Uri.fromFile( File(call.arguments.toString()))
+        val uri = Uri.fromFile(File(call.arguments.toString()))
         val inputImage = InputImage.fromFilePath(activity, uri)
 
         var barcodeFound = false
@@ -291,15 +328,17 @@ class MobileScanner(private val activity: Activity, private val textureRegistry:
                     sink?.success(mapOf("name" to "barcode", "data" to barcode.data))
                 }
             }
-            .addOnFailureListener { e -> Log.e(TAG, e.message, e)
-                result.error(TAG, e.message, e)}
+            .addOnFailureListener { e ->
+                Log.e(TAG, e.message, e)
+                result.error(TAG, e.message, e)
+            }
             .addOnCompleteListener { result.success(barcodeFound) }
 
     }
 
     private fun stop(result: MethodChannel.Result) {
         if (camera == null && preview == null) {
-            result.error(TAG,"Called stop() while already stopped!", null)
+            result.error(TAG, "Called stop() while already stopped!", null)
             return
         }
 
@@ -319,41 +358,51 @@ class MobileScanner(private val activity: Activity, private val textureRegistry:
 
 
     private val Barcode.data: Map<String, Any?>
-        get() = mapOf("corners" to cornerPoints?.map { corner -> corner.data }, "format" to format,
-                "rawBytes" to rawBytes, "rawValue" to rawValue, "type" to valueType,
-                "calendarEvent" to calendarEvent?.data, "contactInfo" to contactInfo?.data,
-                "driverLicense" to driverLicense?.data, "email" to email?.data,
-                "geoPoint" to geoPoint?.data, "phone" to phone?.data, "sms" to sms?.data,
-                "url" to url?.data, "wifi" to wifi?.data, "displayValue" to displayValue)
+        get() = mapOf(
+            "corners" to cornerPoints?.map { corner -> corner.data }, "format" to format,
+            "rawBytes" to rawBytes, "rawValue" to rawValue, "type" to valueType,
+            "calendarEvent" to calendarEvent?.data, "contactInfo" to contactInfo?.data,
+            "driverLicense" to driverLicense?.data, "email" to email?.data,
+            "geoPoint" to geoPoint?.data, "phone" to phone?.data, "sms" to sms?.data,
+            "url" to url?.data, "wifi" to wifi?.data, "displayValue" to displayValue
+        )
 
     private val Point.data: Map<String, Double>
         get() = mapOf("x" to x.toDouble(), "y" to y.toDouble())
 
     private val Barcode.CalendarEvent.data: Map<String, Any?>
-        get() = mapOf("description" to description, "end" to end?.rawValue, "location" to location,
-                "organizer" to organizer, "start" to start?.rawValue, "status" to status,
-                "summary" to summary)
+        get() = mapOf(
+            "description" to description, "end" to end?.rawValue, "location" to location,
+            "organizer" to organizer, "start" to start?.rawValue, "status" to status,
+            "summary" to summary
+        )
 
     private val Barcode.ContactInfo.data: Map<String, Any?>
-        get() = mapOf("addresses" to addresses.map { address -> address.data },
-                "emails" to emails.map { email -> email.data }, "name" to name?.data,
-                "organization" to organization, "phones" to phones.map { phone -> phone.data },
-                "title" to title, "urls" to urls)
+        get() = mapOf(
+            "addresses" to addresses.map { address -> address.data },
+            "emails" to emails.map { email -> email.data }, "name" to name?.data,
+            "organization" to organization, "phones" to phones.map { phone -> phone.data },
+            "title" to title, "urls" to urls
+        )
 
     private val Barcode.Address.data: Map<String, Any?>
         get() = mapOf("addressLines" to addressLines.map { addressLine -> addressLine.toString() }, "type" to type)
 
     private val Barcode.PersonName.data: Map<String, Any?>
-        get() = mapOf("first" to first, "formattedName" to formattedName, "last" to last,
-                "middle" to middle, "prefix" to prefix, "pronunciation" to pronunciation,
-                "suffix" to suffix)
+        get() = mapOf(
+            "first" to first, "formattedName" to formattedName, "last" to last,
+            "middle" to middle, "prefix" to prefix, "pronunciation" to pronunciation,
+            "suffix" to suffix
+        )
 
     private val Barcode.DriverLicense.data: Map<String, Any?>
-        get() = mapOf("addressCity" to addressCity, "addressState" to addressState,
-                "addressStreet" to addressStreet, "addressZip" to addressZip, "birthDate" to birthDate,
-                "documentType" to documentType, "expiryDate" to expiryDate, "firstName" to firstName,
-                "gender" to gender, "issueDate" to issueDate, "issuingCountry" to issuingCountry,
-                "lastName" to lastName, "licenseNumber" to licenseNumber, "middleName" to middleName)
+        get() = mapOf(
+            "addressCity" to addressCity, "addressState" to addressState,
+            "addressStreet" to addressStreet, "addressZip" to addressZip, "birthDate" to birthDate,
+            "documentType" to documentType, "expiryDate" to expiryDate, "firstName" to firstName,
+            "gender" to gender, "issueDate" to issueDate, "issuingCountry" to issuingCountry,
+            "lastName" to lastName, "licenseNumber" to licenseNumber, "middleName" to middleName
+        )
 
     private val Barcode.Email.data: Map<String, Any?>
         get() = mapOf("address" to address, "body" to body, "subject" to subject, "type" to type)
