@@ -9,7 +9,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.2.1'
+        classpath 'com.android.tools.build:gradle:8.7.2'
     }
 }
 
@@ -24,7 +24,8 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 
 android {
-    compileSdkVersion 32
+    compileSdkVersion 35
+    namespace = "dev.steenbakker.mobile_scanner"
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
